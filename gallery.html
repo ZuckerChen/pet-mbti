@@ -189,8 +189,8 @@
         grid.appendChild(card);
       });
       
-      // 添加兜底人格（如果筛选全部或兜底）
-      if (filter === 'all' || filter === 'fallback') {
+      // 添加兜底人格（仅当筛选全部时，在25种人格后面添加）
+      if (filter === 'all') {
         const fallbackRarity = { percent: 5, label: '特殊' };
         const fallbackCard = document.createElement('div');
         fallbackCard.className = 'gallery-card fallback-card';
