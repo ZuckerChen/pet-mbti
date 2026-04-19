@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>测试结果 - 宠物MBTI</title>
+  <meta name="description" content="查看你家宠物的MBTI人格测试结果">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+  
+  <!-- html2canvas for poster generation -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <main class="result-page" id="result-page">
+      <!-- 加载状态 -->
+      <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+      </div>
+      
+      <!-- 结果内容（初始隐藏） -->
+      <div id="result-content" class="hidden">
+        <header class="result-header">
+          <h1>🎉 你家主子的MBTI是...</h1>
+        </header>
+        
+        <!-- 结果卡片 -->
+        <section class="result-card" id="result-card">
+          <div class="type-image" id="type-image">🐾</div>
+          <h2 class="type-name" id="type-name">--</h2>
+          <p class="type-name-en" id="type-name-en">--</p>
+          <p class="type-tagline" id="type-tagline">--</p>
+          <span class="similarity-badge" id="similarity-badge">匹配度: --%</span>
+        </section>
+        
+        <!-- 经典语录 -->
+        <section class="quote-section">
+          <div class="quote-icon">💬</div>
+          <p id="type-quote">--</p>
+        </section>
+        
+        <!-- 性格解读 -->
+        <section class="detail-section">
+          <h3>📖 性格解读</h3>
+          <p id="type-description">--</p>
+        </section>
+        
+        <!-- 养育建议 -->
+        <section class="detail-section">
+          <h3>💡 养育建议</h3>
+          <p id="type-advice">--</p>
+        </section>
+        
+        <!-- 分享区域 -->
+        <section class="share-section">
+          <h3>📤 分享结果</h3>
+          <div class="share-buttons">
+            <button class="btn share-btn copy" onclick="copyLink()">
+              <span>🔗</span> 复制链接
+            </button>
+            <button class="btn share-btn download" onclick="downloadPoster()">
+              <span>🖼️</span> 保存海报
+            </button>
+          </div>
+        </section>
+        
+        <!-- 底部操作 -->
+        <div class="result-actions">
+          <a href="test.html" class="btn btn-secondary">
+            <span>🔄</span> 再测一次
+          </a>
+          <a href="index.html" class="btn btn-primary">
+            <span>🏠</span> 返回首页
+          </a>
+        </div>
+      </div>
+      
+      <!-- 海报生成区域（隐藏，用于截图） -->
+      <div id="poster-area" style="position: fixed; left: -9999px; top: 0; width: 375px; background: linear-gradient(135deg, #FFF8F0 0%, #FFEFE0 100%); padding: 30px; border-radius: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 60px; margin-bottom: 10px;" id="poster-icon">🐾</div>
+          <h2 style="color: #E87A54; font-size: 24px; margin-bottom: 5px;" id="poster-name">--</h2>
+          <p style="color: #8B7355; font-size: 14px;" id="poster-name-en">--</p>
+        </div>
+        <div style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+          <p style="color: #5D4E37; font-size: 16px; font-style: italic; text-align: center;" id="poster-tagline">--</p>
+        </div>
+        <div style="background: linear-gradient(135deg, #FFB89A 0%, #FF9A76 100%); color: white; padding: 15px; border-radius: 15px; text-align: center;">
+          <p style="font-size: 14px; margin-bottom: 5px;">💬 经典语录</p>
+          <p style="font-size: 16px;" id="poster-quote">--</p>
+        </div>
+        <div style="text-align: center; margin-top: 20px; color: #8B7355; font-size: 12px;">
+          <p>扫码测测你家主子是什么人格 👇</p>
+          <p style="margin-top: 10px; font-size: 14px; color: #E87A54; font-weight: bold;">宠物MBTI测试</p>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="js/algorithm.js"></script>
+  
+  <script>
+    // 全局变量
+    let resultData = null;
+    let types = [];
+    let fallback = null;
+    
+    // 初始化
+    async function init() {
+      try {
+        // 加载数据
+        const [typesRes, questionsRes] = await Promise.all([
+          fetch('data/types.json'),
+          fetch('data/questions.json')
+        ]);
+        
+        const typesData = await typesRes.json();
+        types = typesData.types;
+        fallback = typesData.fallback;
+        
+        // 检查URL参数（分享链接）
+        const urlParams = new URLSearchParams(window.location.search);
+        const sharedType = urlParams.get('type');
+        
+        if (sharedType) {
+          // 从分享链接加载
+          loadSharedResult(sharedType, urlParams.get('sim'));
+        } else {
+          // 从本地存储加载测试结果
+          const answersJson = localStorage.getItem('pet_mbti_answers');
+          if (!answersJson) {
+            // 没有测试结果，跳转到测试页
+            window.location.href = 'test.html';
+            return;
+          }
+          
+          const answers = JSON.parse(answersJson);
+          calculateResult(answers);
+        }
+      } catch (error) {
+        console.error('加载失败:', error);
+        document.getElementById('loading').innerHTML = '<p>加载失败，请刷新页面重试</p>';
+      }
+    }
+    
+    // 计算结果
+    function calculateResult(answers) {
+      // 使用algorithm.js中的匹配函数
+      const result = matchPersonality(answers, types, fallback);
+      resultData = result;
+      
+      // 更新URL（用于分享）
+      const params = generateResultParams(result);
+      window.history.replaceState({}, '', `?${params}`);
+      
+      // 显示结果
+      displayResult(result);
+    }
+    
+    // 加载分享的结果
+    function loadSharedResult(typeId, similarity) {
+      const type = types.find(t => t.id === typeId) || fallback;
+      resultData = {
+        type: type,
+        similarity: similarity ? parseInt(similarity) / 100 : 0.85,
+        isShared: true
+      };
+      displayResult(resultData);
+    }
+    
+    // 显示结果
+    function displayResult(result) {
+      const type = result.type;
+      
+      // 隐藏加载，显示内容
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('result-content').classList.remove('hidden');
+      
+      // 设置图标（根据人格类型）
+      const iconMap = {
+        'shy_leaf': '🌿', 'sloth': '🦥', 'old_soul': '🧘', 'lone_wolf': '🐺',
+        'shadow': '👥', 'aloof_lord': '👑', 'observer': '🔍', 'dictator': '🦁',
+        'crybaby': '😢', 'velcro': '🫂', 'drama_queen': '🎭', 'jealousy': '😤',
+        'angel': '😇', 'heartthrob': '💖', 'guardian': '🛡️', 'little_boss': '🦖',
+        'goofball': '🤪', 'social_king': '🌟', 'philosopher': '🤔', 'workaholic': '💼',
+        'foodie': '🍖', 'destroyer': '💥', 'escape_artist': '🏃', 'troublemaker': '😈',
+        'hexagon_warrior': '⭐', 'mystery': '❓'
+      };
+      
+      const icon = iconMap[type.id] || '🐾';
+      document.getElementById('type-image').textContent = icon;
+      
+      // 填充数据
+      document.getElementById('type-name').textContent = type.name;
+      document.getElementById('type-name-en').textContent = type.name_en;
+      document.getElementById('type-tagline').textContent = type.tagline;
+      document.getElementById('type-description').textContent = type.description;
+      document.getElementById('type-advice').textContent = type.advice;
+      document.getElementById('type-quote').textContent = type.quote;
+      
+      // 匹配度
+      const similarity = Math.round(result.similarity * 100);
+      document.getElementById('similarity-badge').textContent = `匹配度: ${similarity}%`;
+      
+      // 设置海报数据
+      document.getElementById('poster-icon').textContent = icon;
+      document.getElementById('poster-name').textContent = type.name;
+      document.getElementById('poster-name-en').textContent = type.name_en;
+      document.getElementById('poster-tagline').textContent = type.tagline;
+      document.getElementById('poster-quote').textContent = type.quote;
+      
+      // 更新页面标题
+      document.title = `我家主子是${type.name}！ - 宠物MBTI`;
+      
+      // 更新meta（用于分享）
+      updateMetaTags(type);
+    }
+    
+    // 更新Meta标签
+    function updateMetaTags(type) {
+      const description = `${type.name}：${type.tagline}`;
+      
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) metaDesc.content = description;
+      
+      let ogTitle = document.querySelector('meta[property="og:title"]');
+      if (!ogTitle) {
+        ogTitle = document.createElement('meta');
+        ogTitle.setAttribute('property', 'og:title');
+        document.head.appendChild(ogTitle);
+      }
+      ogTitle.content = `我家主子是${type.name}！`;
+      
+      let ogDesc = document.querySelector('meta[property="og:description"]');
+      if (!ogDesc) {
+        ogDesc = document.createElement('meta');
+        ogDesc.setAttribute('property', 'og:description');
+        document.head.appendChild(ogDesc);
+      }
+      ogDesc.content = description;
+    }
+    
+    // 复制链接
+    function copyLink() {
+      const url = window.location.href;
+      
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          alert('链接已复制到剪贴板！');
+        }).catch(() => {
+          fallbackCopy(url);
+        });
+      } else {
+        fallbackCopy(url);
+      }
+    }
+    
+    function fallbackCopy(text) {
+      const input = document.createElement('input');
+      input.value = text;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand('copy');
+      document.body.removeChild(input);
+      alert('链接已复制到剪贴板！');
+    }
+    
+    // 下载海报
+    async function downloadPoster() {
+      const posterArea = document.getElementById('poster-area');
+      
+      try {
+        const canvas = await html2canvas(posterArea, {
+          scale: 2,
+          backgroundColor: null,
+          logging: false
+        });
+        
+        const link = document.createElement('a');
+        link.download = `宠物MBTI-${resultData.type.name}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (error) {
+        console.error('生成海报失败:', error);
+        alert('生成海报失败，请重试');
+      }
+    }
+    
+    // 启动
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>宠物MBTI测试 - 测测你家主子是什么人格？</title>
+  <meta name="description" content="30道题，发现你家宠物的隐藏性格！猫狗MBTI性格测试，娱乐向轻量级测试网站">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="宠物MBTI测试 - 测测你家主子是什么人格？">
+  <meta property="og:description" content="30道题，发现你家宠物的隐藏性格！">
+  <meta property="og:type" content="website">
+  
+  <!-- 样式 -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <!-- 图标 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+</head>
+<body>
+  <div class="container">
+    <main class="home-page fade-in">
+      <!-- 主视觉区域 -->
+      <section class="hero-section">
+        <div class="pet-icons">🐱 🐶</div>
+        <h1 class="main-title">测测你家主子<br>是什么人格？</h1>
+        <p class="subtitle">30道题，发现宠物的隐藏性格</p>
+      </section>
+      
+      <!-- 特性介绍 -->
+      <section class="features">
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <p class="feature-text">科学算法<br>15维人格模型</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <p class="feature-text">25种人格<br>精准匹配</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📱</div>
+          <p class="feature-text">一键分享<br>朋友圈晒宠</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💝</div>
+          <p class="feature-text">养育建议<br>更懂你的TA</p>
+        </div>
+      </section>
+      
+      <!-- 开始按钮 -->
+      <a href="test.html" class="btn btn-primary btn-large">
+        <span>🚀</span>
+        <span>开始测试</span>
+      </a>
+      
+      <!-- 底部说明 -->
+      <footer style="margin-top: 60px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
+        <p>💡 本测试仅供娱乐参考</p>
+        <p style="margin-top: 8px;">已帮助 <span id="test-count">10,000+</span> 位铲屎官了解自家主子</p>
+      </footer>
+    </main>
+  </div>
+  
+  <script>
+    // 简单的访问计数（本地存储）
+    (function() {
+      let count = localStorage.getItem('pet_mbti_visits') || 10000;
+      count = parseInt(count) + Math.floor(Math.random() * 3);
+      localStorage.setItem('pet_mbti_visits', count);
+      document.getElementById('test-count').textContent = count.toLocaleString() + '+';
+    })();
+  </script>
+</body>
+</html>

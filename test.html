@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>测试中... - 宠物MBTI</title>
+  <meta name="description" content="回答30道问题，发现你家宠物的隐藏性格">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+</head>
+<body>
+  <div class="container">
+    <main class="test-page">
+      <!-- 头部 -->
+      <header class="test-header">
+        <h1>🐾 宠物MBTI测试</h1>
+      </header>
+      
+      <!-- 进度条 -->
+      <section class="progress-section">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 3.33%"></div>
+        </div>
+        <p class="progress-text">第 <span id="current-num">1</span> / 30 题</p>
+      </section>
+      
+      <!-- 问题卡片 -->
+      <section class="question-card slide-in" id="question-card">
+        <span class="question-number" id="question-number">问题 1</span>
+        <h2 class="question-text" id="question-text">加载中...</h2>
+        
+        <div class="options-list" id="options-list">
+          <!-- 选项将通过JS动态生成 -->
+        </div>
+      </section>
+      
+      <!-- 导航按钮 -->
+      <nav class="test-navigation">
+        <button class="btn btn-secondary nav-btn" id="prev-btn" onclick="goToPrev()" disabled>
+          <span>←</span> 上一题
+        </button>
+        <button class="btn btn-primary nav-btn" id="next-btn" onclick="goToNext()" disabled>
+          下一题 <span>→</span>
+        </button>
+      </nav>
+    </main>
+  </div>
+  
+  <!-- 加载算法脚本 -->
+  <script src="js/algorithm.js"></script>
+  
+  <script>
+    // 全局变量
+    let questions = [];
+    let currentIndex = 0;
+    let answers = {}; // { Q1: score, Q2: score, ... }
+    
+    // 初始化
+    async function init() {
+      try {
+        const response = await fetch('data/questions.json');
+        const data = await response.json();
+        questions = data.questions;
+        
+        // 检查是否有保存的进度
+        const savedProgress = localStorage.getItem('pet_mbti_progress');
+        if (savedProgress) {
+          const progress = JSON.parse(savedProgress);
+          if (confirm('检测到上次未完成的测试，是否继续？')) {
+            currentIndex = progress.currentIndex || 0;
+            answers = progress.answers || {};
+          } else {
+            localStorage.removeItem('pet_mbti_progress');
+          }
+        }
+        
+        renderQuestion();
+      } catch (error) {
+        console.error('加载题目失败:', error);
+        document.getElementById('question-text').textContent = '加载失败，请刷新页面重试';
+      }
+    }
+    
+    // 渲染当前问题
+    function renderQuestion() {
+      const question = questions[currentIndex];
+      
+      // 更新进度
+      const progress = ((currentIndex + 1) / questions.length) * 100;
+      document.getElementById('progress-fill').style.width = progress + '%';
+      document.getElementById('current-num').textContent = currentIndex + 1;
+      
+      // 更新问题内容
+      document.getElementById('question-number').textContent = `问题 ${currentIndex + 1}`;
+      document.getElementById('question-text').textContent = question.text;
+      
+      // 渲染选项
+      const optionsList = document.getElementById('options-list');
+      optionsList.innerHTML = '';
+      
+      question.options.forEach((option, index) => {
+        const optionItem = document.createElement('div');
+        optionItem.className = 'option-item';
+        optionItem.dataset.score = option.score;
+        
+        // 检查是否已选择
+        if (answers[question.id] === option.score) {
+          optionItem.classList.add('selected');
+        }
+        
+        optionItem.innerHTML = `
+          <div class="option-radio"></div>
+          <div class="option-text">${option.text}</div>
+        `;
+        
+        optionItem.addEventListener('click', () => selectOption(option.score));
+        optionsList.appendChild(optionItem);
+      });
+      
+      // 更新按钮状态
+      document.getElementById('prev-btn').disabled = currentIndex === 0;
+      document.getElementById('next-btn').disabled = !answers[question.id];
+      
+      // 最后一题显示"查看结果"
+      const nextBtn = document.getElementById('next-btn');
+      if (currentIndex === questions.length - 1) {
+        nextBtn.innerHTML = '查看结果 <span>✨</span>';
+      } else {
+        nextBtn.innerHTML = '下一题 <span>→</span>';
+      }
+      
+      // 添加动画效果
+      const card = document.getElementById('question-card');
+      card.classList.remove('slide-in');
+      void card.offsetWidth; // 触发重排
+      card.classList.add('slide-in');
+    }
+    
+    // 选择选项
+    function selectOption(score) {
+      const question = questions[currentIndex];
+      answers[question.id] = score;
+      
+      // 更新UI
+      const optionItems = document.querySelectorAll('.option-item');
+      optionItems.forEach(item => {
+        item.classList.remove('selected');
+        if (parseInt(item.dataset.score) === score) {
+          item.classList.add('selected');
+        }
+      });
+      
+      // 启用下一题按钮
+      document.getElementById('next-btn').disabled = false;
+      
+      // 自动保存进度
+      saveProgress();
+      
+      // 延迟自动进入下一题（可选）
+      // setTimeout(goToNext, 300);
+    }
+    
+    // 上一题
+    function goToPrev() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+        saveProgress();
+      }
+    }
+    
+    // 下一题
+    function goToNext() {
+      if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+        saveProgress();
+      } else {
+        // 完成测试，提交结果
+        submitTest();
+      }
+    }
+    
+    // 保存进度
+    function saveProgress() {
+      const progress = {
+        currentIndex: currentIndex,
+        answers: answers,
+        timestamp: Date.now()
+      };
+      localStorage.setItem('pet_mbti_progress', JSON.stringify(progress));
+    }
+    
+    // 提交测试
+    async function submitTest() {
+      // 检查是否全部回答
+      if (Object.keys(answers).length < questions.length) {
+        alert('请回答所有问题后再查看结果');
+        return;
+      }
+      
+      // 保存答案到localStorage，供结果页使用
+      localStorage.setItem('pet_mbti_answers', JSON.stringify(answers));
+      
+      // 清除进度
+      localStorage.removeItem('pet_mbti_progress');
+      
+      // 跳转到结果页
+      window.location.href = 'result.html';
+    }
+    
+    // 启动
+    init();
+  </script>
+</body>
+</html>
