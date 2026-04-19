@@ -426,14 +426,17 @@ body {
 }
 
 .similarity-badge {
-  display: inline-block;
-  margin-top: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px 20px;
   background: linear-gradient(135deg, var(--secondary-color) 0%, #FFC107 100%);
   color: var(--text-primary);
   border-radius: 20px;
   font-weight: 600;
   font-size: 0.9rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 /* 详情区块 */
@@ -678,6 +681,7 @@ body {
   justify-content: center;
   flex-wrap: wrap;
   margin-top: 15px;
+  align-items: center;
 }
 
 /* 稀有度徽章 */
@@ -686,6 +690,11 @@ body {
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .rarity-legendary {
