@@ -288,13 +288,19 @@ body {
 
 .option-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   padding: 16px 20px;
   background: var(--bg-color);
   border: 2px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: var(--transition);
+  min-height: 60px;
+}
+
+.option-item .option-radio {
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .option-item:hover {
@@ -537,6 +543,16 @@ body {
     font-size: 14px;
   }
   
+  .option-item {
+    padding: 14px 16px;
+    min-height: 56px;
+  }
+  
+  .option-text {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
   .main-title {
     font-size: 1.8rem;
   }
@@ -717,11 +733,13 @@ body {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
+  overflow-x: auto;
 }
 
 #radar-chart {
   max-width: 100%;
   height: auto;
+  min-width: 280px;
 }
 
 /* 维度说明 */
