@@ -437,6 +437,8 @@ body {
   font-size: 0.9rem;
   line-height: 1;
   white-space: nowrap;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 /* 详情区块 */
@@ -681,12 +683,12 @@ body {
   justify-content: center;
   flex-wrap: wrap;
   margin-top: 15px;
-  align-items: center;
+  align-items: stretch;
 }
 
 /* 稀有度徽章 */
 .rarity-badge {
-  padding: 6px 16px;
+  padding: 8px 16px;
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -695,6 +697,8 @@ body {
   justify-content: center;
   line-height: 1;
   white-space: nowrap;
+  height: 36px;
+  box-sizing: border-box;
 }
 
 .rarity-legendary {
