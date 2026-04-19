@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>人格图鉴 - 宠物MBTI</title>
+  <meta name="description" content="查看25种宠物人格类型完整图鉴">
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/gallery.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
+  
+  <!-- 公共脚本 -->
+  <script src="js/common.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <main class="gallery-page">
+      <!-- 头部 -->
+      <header class="gallery-header">
+        <nav class="nav-bar">
+          <a href="index.html" class="nav-logo">🐾 宠物MBTI</a>
+          <div class="nav-links">
+            <a href="index.html" class="nav-link">首页</a>
+            <a href="test.html" class="nav-link">开始测试</a>
+            <span class="nav-link active">人格图鉴</span>
+          </div>
+        </nav>
+        
+        <div class="gallery-title">
+          <h1>🎭 宠物人格图鉴</h1>
+          <p class="gallery-subtitle">探索25种独特的宠物性格类型</p>
+          <div class="stats-bar">
+            <span class="stat-item">📊 25种标准人格</span>
+            <span class="stat-item">🎲 1种兜底人格</span>
+            <span class="stat-item">✨ 15维评估模型</span>
+          </div>
+        </div>
+      </header>
+      
+      <!-- 筛选标签 -->
+      <section class="filter-section">
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">全部</button>
+          <button class="filter-tab" data-filter="normal">标准人格</button>
+          <button class="filter-tab" data-filter="fallback">兜底人格</button>
+        </div>
+        
+        <div class="sort-options">
+          <select id="sort-select">
+            <option value="default">默认排序</option>
+            <option value="rarity">按稀有度</option>
+            <option value="name">按名称</option>
+          </select>
+        </div>
+      </section>
+      
+      <!-- 图鉴网格 -->
+      <section class="gallery-grid" id="gallery-grid">
+        <!-- 卡片将通过JS动态生成 -->
+      </section>
+      
+      <!-- 详情模态框 -->
+      <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+          <button class="modal-close" id="modal-close">×</button>
+          <div class="modal-body" id="modal-body">
+            <!-- 详情内容将通过JS填充 -->
+          </div>
+        </div>
+      </div>
+      
+      <!-- 底部CTA -->
+      <section class="gallery-cta">
+        <h2>想知道你家主子是什么类型？</h2>
+        <a href="test.html" class="btn btn-primary btn-large">
+          <span>🚀</span> 开始测试
+        </a>
+      </section>
+    </main>
+  </div>
+  
+  <script>
+    // 全局变量
+    let types = [];
+    let fallback = null;
+    let localStats = {};
+    
+    // 人格图标映射
+    const iconMap = {
+      'shy_leaf': '🌿', 'sloth': '🦥', 'old_soul': '🧘', 'lone_wolf': '🐺',
+      'shadow': '👥', 'aloof_lord': '👑', 'observer': '🔍', 'dictator': '🦁',
+      'crybaby': '😢', 'velcro': '🫂', 'drama_queen': '🎭', 'jealousy': '😤',
+      'angel': '😇', 'heartthrob': '💖', 'guardian': '🛡️', 'little_boss': '🦖',
+      'goofball': '🤪', 'social_king': '🌟', 'philosopher': '🤔', 'workaholic': '💼',
+      'foodie': '🍖', 'destroyer': '💥', 'escape_artist': '🏃', 'troublemaker': '😈',
+      'hexagon_warrior': '⭐', 'mystery': '❓'
+    };
+    
+    // 稀有度计算（基于维度组合的理论概率）
+    function calculateRarity(code) {
+      // 每个维度3种可能，15维总组合数 = 3^15 = 14,348,907
+      // 简化计算：基于H/M/L分布估算
+      const parts = code.split('-');
+      let hCount = 0, lCount = 0;
+      
+      parts.forEach(part => {
+        part.split('').forEach(char => {
+          if (char === 'H') hCount++;
+          if (char === 'L') lCount++;
+        });
+      });
+      
+      // 极端值（全H或全L）更稀有
+      if (hCount === 15 || lCount === 15) return { percent: 0.001, label: '传说' };
+      if (hCount >= 12 || lCount >= 12) return { percent: 0.1, label: '史诗' };
+      if (hCount >= 9 || lCount >= 9) return { percent: 1, label: '稀有' };
+      if (hCount >= 6 || lCount >= 6) return { percent: 5, label: ' uncommon' };
+      return { percent: 15, label: '常见' };
+    }
+    
+    // 加载本地统计
+    function loadLocalStats() {
+      const stats = localStorage.getItem('pet_mbti_stats');
+      if (stats) {
+        localStats = JSON.parse(stats);
+      }
+    }
+    
+    // 初始化
+    async function init() {
+      try {
+        const response = await fetch('data/types.json');
+        const data = await response.json();
+        types = data.types;
+        fallback = data.fallback;
+        
+        loadLocalStats();
+        renderGallery();
+        setupEventListeners();
+      } catch (error) {
+        console.error('加载失败:', error);
+        document.getElementById('gallery-grid').innerHTML = '<p>加载失败，请刷新页面重试</p>';
+      }
+    }
+    
+    // 渲染图鉴
+    function renderGallery(filter = 'all', sort = 'default') {
+      const grid = document.getElementById('gallery-grid');
+      grid.innerHTML = '';
+      
+      let displayTypes = [...types];
+      if (filter === 'fallback') {
+        displayTypes = [fallback];
+      }
+      
+      // 排序
+      if (sort === 'rarity') {
+        displayTypes.sort((a, b) => {
+          const rarityA = calculateRarity(a.code).percent;
+          const rarityB = calculateRarity(b.code).percent;
+          return rarityA - rarityB;
+        });
+      } else if (sort === 'name') {
+        displayTypes.sort((a, b) => a.name.localeCompare(b.name));
+      }
+      
+      displayTypes.forEach(type => {
+        const rarity = calculateRarity(type.code);
+        const icon = iconMap[type.id] || '🐾';
+        const count = localStats[type.id] || 0;
+        
+        const card = document.createElement('div');
+        card.className = 'gallery-card';
+        card.dataset.id = type.id;
+        card.innerHTML = `
+          <div class="card-rarity rarity-${rarity.label}">${rarity.label}</div>
+          <div class="card-icon">${icon}</div>
+          <h3 class="card-name">${type.name}</h3>
+          <p class="card-code">${type.code}</p>
+          <p class="card-tagline">${type.tagline}</p>
+          <div class="card-stats">
+            <span class="rarity-percent">${rarity.percent}%</span>
+            ${count > 0 ? `<span class="test-count">已测出 ${count} 次</span>` : ''}
+          </div>
+        `;
+        
+        card.addEventListener('click', () => showDetail(type));
+        grid.appendChild(card);
+      });
+      
+      // 添加兜底人格（如果筛选全部或兜底）
+      if (filter === 'all' || filter === 'fallback') {
+        const fallbackRarity = { percent: 5, label: '特殊' };
+        const fallbackCard = document.createElement('div');
+        fallbackCard.className = 'gallery-card fallback-card';
+        fallbackCard.innerHTML = `
+          <div class="card-rarity rarity-${fallbackRarity.label}">${fallbackRarity.label}</div>
+          <div class="card-icon">${iconMap[fallback.id]}</div>
+          <h3 class="card-name">${fallback.name}</h3>
+          <p class="card-code">${fallback.code}</p>
+          <p class="card-tagline">${fallback.tagline}</p>
+          <div class="card-stats">
+            <span class="rarity-percent">${fallbackRarity.percent}%</span>
+          </div>
+        `;
+        fallbackCard.addEventListener('click', () => showDetail(fallback, true));
+        grid.appendChild(fallbackCard);
+      }
+    }
+    
+    // 显示详情
+    function showDetail(type, isFallback = false) {
+      const modal = document.getElementById('modal-overlay');
+      const body = document.getElementById('modal-body');
+      const rarity = isFallback ? { percent: 5, label: '特殊' } : calculateRarity(type.code);
+      const icon = iconMap[type.id] || '🐾';
+      
+      // 解析15维度
+      const dimensions = parseDimensions(type.code);
+      
+      body.innerHTML = `
+        <div class="modal-header">
+          <div class="modal-icon">${icon}</div>
+          <div class="modal-title">
+            <h2>${type.name}</h2>
+            <p class="modal-name-en">${type.name_en}</p>
+            <span class="modal-rarity rarity-${rarity.label}">${rarity.label} · ${rarity.percent}%</span>
+          </div>
+        </div>
+        
+        <div class="modal-tagline">"${type.tagline}"</div>
+        
+        <div class="modal-section">
+          <h3>📖 性格解读</h3>
+          <p>${type.description}</p>
+        </div>
+        
+        <div class="modal-section">
+          <h3>💡 养育建议</h3>
+          <p>${type.advice}</p>
+        </div>
+        
+        <div class="modal-section">
+          <h3>💬 经典语录</h3>
+          <blockquote>${type.quote}</blockquote>
+        </div>
+        
+        <div class="modal-section">
+          <h3>📊 15维度特征</h3>
+          <div class="dimensions-list">
+            ${dimensions.map(d => `
+              <div class="dimension-item">
+                <span class="dim-name">${d.name}</span>
+                <span class="dim-value dim-${d.level.toLowerCase()}">${d.level}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <div class="modal-actions">
+          <a href="test.html" class="btn btn-primary">🎯 测测我家主子</a>
+          <button class="btn btn-secondary" onclick="copyTypeLink('${type.id}')">🔗 分享</button>
+        </div>
+      `;
+      
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    // 解析维度
+    function parseDimensions(code) {
+      const dimNames = [
+        'S1-独立依赖', 'S2-安静活跃', 'S3-谨慎大胆',
+        'E1-冷淡热情', 'E2-隐忍表达', 'E3-平静易怒',
+        'A1-认生社交', 'A2-守旧喜新', 'A3-顺从固执',
+        'Ac1-慢速快速', 'Ac2-粗心精细', 'Ac3-拖延果断',
+        'So1-避人主动', 'So2-独宠分享', 'So3-沉默吵闹'
+      ];
+      
+      const parts = code.split('-');
+      const levels = parts.join('').split('');
+      
+      return dimNames.map((name, i) => ({
+        name: name,
+        level: levels[i] || 'M'
+      }));
+    }
+    
+    // 复制链接
+    function copyTypeLink(typeId) {
+      const url = `${window.location.origin}/result.html?type=${typeId}`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert('链接已复制！');
+      });
+    }
+    
+    // 事件监听
+    function setupEventListeners() {
+      // 筛选标签
+      document.querySelectorAll('.filter-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          const filter = tab.dataset.filter;
+          const sort = document.getElementById('sort-select').value;
+          renderGallery(filter, sort);
+        });
+      });
+      
+      // 排序
+      document.getElementById('sort-select').addEventListener('change', (e) => {
+        const sort = e.target.value;
+        const filter = document.querySelector('.filter-tab.active').dataset.filter;
+        renderGallery(filter, sort);
+      });
+      
+      // 关闭模态框
+      document.getElementById('modal-close').addEventListener('click', closeModal);
+      document.getElementById('modal-overlay').addEventListener('click', (e) => {
+        if (e.target.id === 'modal-overlay') closeModal();
+      });
+      
+      // ESC关闭
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeModal();
+      });
+    }
+    
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    
+    // 启动
+    init();
+  </script>
+</body>
+</html>

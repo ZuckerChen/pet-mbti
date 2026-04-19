@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
   
+  <!-- 公共脚本 -->
+  <script src="js/common.js" defer></script>
+  
   <!-- html2canvas for poster generation -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
@@ -32,13 +35,49 @@
           <h2 class="type-name" id="type-name">--</h2>
           <p class="type-name-en" id="type-name-en">--</p>
           <p class="type-tagline" id="type-tagline">--</p>
-          <span class="similarity-badge" id="similarity-badge">匹配度: --%</span>
+          <div class="result-badges">
+            <span class="similarity-badge" id="similarity-badge">匹配度: --%</span>
+            <span class="rarity-badge" id="rarity-badge">--</span>
+          </div>
+        </section>
+        
+        <!-- 15维度雷达图 -->
+        <section class="radar-section">
+          <h3>📊 15维度性格画像</h3>
+          <div class="radar-container">
+            <canvas id="radar-chart" width="300" height="300"></canvas>
+          </div>
+          <div class="dimensions-legend" id="dimensions-legend">
+            <!-- 维度说明将通过JS生成 -->
+          </div>
         </section>
         
         <!-- 经典语录 -->
         <section class="quote-section">
           <div class="quote-icon">💬</div>
           <p id="type-quote">--</p>
+        </section>
+        
+        <!-- 详细解读（可展开） -->
+        <section class="detail-expandable">
+          <div class="expand-header" onclick="toggleDetail()">
+            <h3>📖 查看详细解读</h3>
+            <span class="expand-icon" id="expand-icon">▼</span>
+          </div>
+          <div class="expand-content hidden" id="detail-content">
+            <div class="detail-block">
+              <h4>🎭 性格深度分析</h4>
+              <p id="detail-description">--</p>
+            </div>
+            <div class="detail-block">
+              <h4>💝 与主人的相处之道</h4>
+              <p id="detail-advice">--</p>
+            </div>
+            <div class="detail-block">
+              <h4>🎯 精准维度匹配</h4>
+              <p id="detail-dimensions">--</p>
+            </div>
+          </div>
         </section>
         
         <!-- 性格解读 -->
@@ -70,6 +109,9 @@
         <div class="result-actions">
           <a href="test.html" class="btn btn-secondary">
             <span>🔄</span> 再测一次
+          </a>
+          <a href="gallery.html" class="btn btn-secondary">
+            <span>🎭</span> 人格图鉴
           </a>
           <a href="index.html" class="btn btn-primary">
             <span>🏠</span> 返回首页
@@ -170,6 +212,163 @@
       displayResult(resultData);
     }
     
+    // 计算稀有度
+    function calculateRarity(code) {
+      const parts = code.split('-');
+      let hCount = 0, lCount = 0;
+      
+      parts.forEach(part => {
+        part.split('').forEach(char => {
+          if (char === 'H') hCount++;
+          if (char === 'L') lCount++;
+        });
+      });
+      
+      if (hCount === 15 || lCount === 15) return { percent: 0.001, label: '传说', class: 'legendary' };
+      if (hCount >= 12 || lCount >= 12) return { percent: 0.1, label: '史诗', class: 'epic' };
+      if (hCount >= 9 || lCount >= 9) return { percent: 1, label: '稀有', class: 'rare' };
+      if (hCount >= 6 || lCount >= 6) return { percent: 5, label: ' uncommon', class: 'uncommon' };
+      return { percent: 15, label: '常见', class: 'common' };
+    }
+    
+    // 绘制雷达图
+    function drawRadarChart(userVector) {
+      const canvas = document.getElementById('radar-chart');
+      const ctx = canvas.getContext('2d');
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = 100;
+      
+      // 维度标签
+      const labels = ['S1', 'S2', 'S3', 'E1', 'E2', 'E3', 'A1', 'A2', 'A3', 'Ac1', 'Ac2', 'Ac3', 'So1', 'So2', 'So3'];
+      const angleStep = (Math.PI * 2) / 15;
+      
+      // 清空画布
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // 绘制背景网格
+      for (let i = 1; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 1;
+        for (let j = 0; j < 15; j++) {
+          const angle = j * angleStep - Math.PI / 2;
+          const x = centerX + Math.cos(angle) * (radius * i / 3);
+          const y = centerY + Math.sin(angle) * (radius * i / 3);
+          if (j === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+      }
+      
+      // 绘制轴线
+      for (let i = 0; i < 15; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        ctx.beginPath();
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.moveTo(centerX, centerY);
+        ctx.lineTo(
+          centerX + Math.cos(angle) * radius,
+          centerY + Math.sin(angle) * radius
+        );
+        ctx.stroke();
+        
+        // 绘制标签
+        const labelX = centerX + Math.cos(angle) * (radius + 20);
+        const labelY = centerY + Math.sin(angle) * (radius + 20);
+        ctx.fillStyle = '#666';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(labels[i], labelX, labelY);
+      }
+      
+      // 绘制数据区域
+      ctx.beginPath();
+      ctx.fillStyle = 'rgba(255, 154, 118, 0.3)';
+      ctx.strokeStyle = '#FF9A76';
+      ctx.lineWidth = 2;
+      
+      for (let i = 0; i < 15; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const value = userVector ? userVector[i] : 2;
+        const r = (value / 3) * radius;
+        const x = centerX + Math.cos(angle) * r;
+        const y = centerY + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      
+      // 绘制数据点
+      for (let i = 0; i < 15; i++) {
+        const angle = i * angleStep - Math.PI / 2;
+        const value = userVector ? userVector[i] : 2;
+        const r = (value / 3) * radius;
+        const x = centerX + Math.cos(angle) * r;
+        const y = centerY + Math.sin(angle) * r;
+        ctx.beginPath();
+        ctx.fillStyle = '#FF9A76';
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    
+    // 生成维度说明
+    function generateDimensionsLegend(userVector, typeVector) {
+      const dimensions = [
+        { id: 'S1', name: '独立-依赖', model: '自我模型' },
+        { id: 'S2', name: '安静-活跃', model: '自我模型' },
+        { id: 'S3', name: '谨慎-大胆', model: '自我模型' },
+        { id: 'E1', name: '冷淡-热情', model: '情感模型' },
+        { id: 'E2', name: '隐忍-表达', model: '情感模型' },
+        { id: 'E3', name: '平静-易怒', model: '情感模型' },
+        { id: 'A1', name: '认生-社交', model: '态度模型' },
+        { id: 'A2', name: '守旧-喜新', model: '态度模型' },
+        { id: 'A3', name: '顺从-固执', model: '态度模型' },
+        { id: 'Ac1', name: '慢速-快速', model: '行动模型' },
+        { id: 'Ac2', name: '粗心-精细', model: '行动模型' },
+        { id: 'Ac3', name: '拖延-果断', model: '行动模型' },
+        { id: 'So1', name: '避人-主动', model: '社交模型' },
+        { id: 'So2', name: '独宠-分享', model: '社交模型' },
+        { id: 'So3', name: '沉默-吵闹', model: '社交模型' }
+      ];
+      
+      const levelMap = { 1: 'L', 2: 'M', 3: 'H' };
+      const levelNames = { 1: '低', 2: '中', 3: '高' };
+      
+      let html = '';
+      let currentModel = '';
+      
+      dimensions.forEach((dim, i) => {
+        if (dim.model !== currentModel) {
+          currentModel = dim.model;
+          html += `<div class="model-group"><h4>${currentModel}</h4>`;
+        }
+        
+        const userLevel = userVector ? levelMap[userVector[i]] : 'M';
+        const match = userVector && typeVector && userVector[i] === typeVector[i];
+        
+        html += `
+          <div class="legend-item ${match ? 'matched' : ''}">
+            <span class="legend-name">${dim.name}</span>
+            <span class="legend-level level-${userLevel.toLowerCase()}">${levelNames[userVector ? userVector[i] : 2]}</span>
+            ${match ? '<span class="match-icon">✓</span>' : ''}
+          </div>
+        `;
+        
+        if (i < dimensions.length - 1 && dimensions[i + 1].model !== currentModel) {
+          html += '</div>';
+        }
+      });
+      html += '</div>';
+      
+      return html;
+    }
+    
     // 显示结果
     function displayResult(result) {
       const type = result.type;
@@ -200,9 +399,40 @@
       document.getElementById('type-advice').textContent = type.advice;
       document.getElementById('type-quote').textContent = type.quote;
       
+      // 详细解读内容
+      document.getElementById('detail-description').textContent = type.description;
+      document.getElementById('detail-advice').textContent = type.advice;
+      
       // 匹配度
       const similarity = Math.round(result.similarity * 100);
       document.getElementById('similarity-badge').textContent = `匹配度: ${similarity}%`;
+      
+      // 稀有度
+      const rarity = calculateRarity(type.code);
+      const rarityBadge = document.getElementById('rarity-badge');
+      rarityBadge.textContent = `${rarity.label} · ${rarity.percent}%`;
+      rarityBadge.className = `rarity-badge rarity-${rarity.class}`;
+      
+      // 维度匹配详情
+      let dimText = `15维度匹配详情：\n`;
+      if (result.userVector && result.typeVector) {
+        let matchCount = 0;
+        result.userVector.forEach((v, i) => {
+          if (v === result.typeVector[i]) matchCount++;
+        });
+        dimText += `精准匹配 ${matchCount}/15 个维度\n\n`;
+        dimText += `您的宠物在15个维度上的特征分布如雷达图所示，其中 ${matchCount} 个维度与该人格类型完全吻合。`;
+      }
+      document.getElementById('detail-dimensions').textContent = dimText;
+      
+      // 绘制雷达图
+      setTimeout(() => {
+        drawRadarChart(result.userVector);
+        document.getElementById('dimensions-legend').innerHTML = generateDimensionsLegend(
+          result.userVector, 
+          result.typeVector
+        );
+      }, 100);
       
       // 设置海报数据
       document.getElementById('poster-icon').textContent = icon;
@@ -216,6 +446,24 @@
       
       // 更新meta（用于分享）
       updateMetaTags(type);
+      
+      // 保存到本地统计
+      saveToStats(type.id);
+    }
+    
+    // 保存到本地统计
+    function saveToStats(typeId) {
+      let stats = JSON.parse(localStorage.getItem('pet_mbti_stats') || '{}');
+      stats[typeId] = (stats[typeId] || 0) + 1;
+      localStorage.setItem('pet_mbti_stats', JSON.stringify(stats));
+    }
+    
+    // 切换详细解读
+    function toggleDetail() {
+      const content = document.getElementById('detail-content');
+      const icon = document.getElementById('expand-icon');
+      content.classList.toggle('hidden');
+      icon.textContent = content.classList.contains('hidden') ? '▼' : '▲';
     }
     
     // 更新Meta标签

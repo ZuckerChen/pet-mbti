@@ -14,6 +14,9 @@
   <!-- 样式 -->
   <link rel="stylesheet" href="css/style.css">
   
+  <!-- 公共脚本 -->
+  <script src="js/common.js" defer></script>
+  
   <!-- 图标 -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐾</text></svg>">
 </head>
@@ -47,11 +50,17 @@
         </div>
       </section>
       
-      <!-- 开始按钮 -->
-      <a href="test.html" class="btn btn-primary btn-large">
-        <span>🚀</span>
-        <span>开始测试</span>
-      </a>
+      <!-- 操作按钮 -->
+      <div class="action-buttons">
+        <a href="test.html" class="btn btn-primary btn-large">
+          <span>🚀</span>
+          <span>开始测试</span>
+        </a>
+        <a href="gallery.html" class="btn btn-secondary btn-large">
+          <span>🎭</span>
+          <span>人格图鉴</span>
+        </a>
+      </div>
       
       <!-- 底部说明 -->
       <footer style="margin-top: 60px; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">
@@ -68,6 +77,14 @@
       count = parseInt(count) + Math.floor(Math.random() * 3);
       localStorage.setItem('pet_mbti_visits', count);
       document.getElementById('test-count').textContent = count.toLocaleString() + '+';
+    })();
+    
+    // 检查并应用保存的主题
+    (function() {
+      const savedTheme = localStorage.getItem('pet_mbti_theme');
+      if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
     })();
   </script>
 </body>

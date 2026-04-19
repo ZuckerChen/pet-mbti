@@ -20,6 +20,21 @@
   --transition: all 0.3s ease;
 }
 
+/* 暗色模式变量 */
+[data-theme="dark"] {
+  --primary-color: #FF8A65;
+  --primary-light: #FFAB91;
+  --primary-dark: #F4511E;
+  --secondary-color: #FFD54F;
+  --bg-color: #1a1a2e;
+  --bg-secondary: #252542;
+  --text-primary: #e4e4e7;
+  --text-secondary: #a1a1aa;
+  --white: #2d2d44;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
 /* 基础重置 */
 * {
   margin: 0;
@@ -123,6 +138,38 @@ body {
 .feature-text {
   font-size: 0.9rem;
   color: var(--text-secondary);
+}
+
+/* 按钮容器 */
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* 主题切换按钮 */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--white);
+  border: none;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  z-index: 100;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
 }
 
 /* 按钮样式 */
@@ -602,4 +649,212 @@ body {
 /* 隐藏元素 */
 .hidden {
   display: none !important;
+}
+
+/* ============================================
+   结果页新增样式
+   ============================================ */
+
+/* 结果徽章组 */
+.result-badges {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+/* 稀有度徽章 */
+.rarity-badge {
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.rarity-legendary {
+  background: linear-gradient(135deg, #FFD700, #FFA500);
+  color: #fff;
+}
+
+.rarity-epic {
+  background: linear-gradient(135deg, #C0C0C0, #9370DB);
+  color: #fff;
+}
+
+.rarity-rare {
+  background: linear-gradient(135deg, #87CEEB, #4169E1);
+  color: #fff;
+}
+
+.rarity-uncommon {
+  background: linear-gradient(135deg, #90EE90, #3CB371);
+  color: #fff;
+}
+
+.rarity-common {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
+/* 雷达图区域 */
+.radar-section {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 25px;
+  box-shadow: var(--shadow);
+  margin-bottom: 25px;
+  text-align: center;
+}
+
+.radar-section h3 {
+  font-size: 1.1rem;
+  color: var(--primary-dark);
+  margin-bottom: 20px;
+}
+
+.radar-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+#radar-chart {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 维度说明 */
+.dimensions-legend {
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.model-group {
+  margin-bottom: 15px;
+}
+
+.model-group h4 {
+  font-size: 0.9rem;
+  color: var(--primary-dark);
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--bg-secondary);
+}
+
+.legend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-color);
+}
+
+.legend-item.matched {
+  background: rgba(255, 154, 118, 0.1);
+  border-left: 3px solid var(--primary-color);
+}
+
+.legend-name {
+  color: var(--text-secondary);
+}
+
+.legend-level {
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.level-h {
+  background: #FFE4E1;
+  color: #CD5C5C;
+}
+
+.level-m {
+  background: #F0F8FF;
+  color: #4682B4;
+}
+
+.level-l {
+  background: #F5F5DC;
+  color: #8B7355;
+}
+
+.match-icon {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* 可展开详情 */
+.detail-expandable {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 25px;
+  overflow: hidden;
+}
+
+.expand-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.expand-header:hover {
+  background: var(--bg-color);
+}
+
+.expand-header h3 {
+  font-size: 1.1rem;
+  color: var(--primary-dark);
+  margin: 0;
+}
+
+.expand-icon {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  transition: var(--transition);
+}
+
+.expand-content {
+  padding: 0 25px 25px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.detail-block {
+  margin-bottom: 20px;
+}
+
+.detail-block:last-child {
+  margin-bottom: 0;
+}
+
+.detail-block h4 {
+  font-size: 1rem;
+  color: var(--primary-dark);
+  margin-bottom: 10px;
+}
+
+.detail-block p {
+  color: var(--text-secondary);
+  line-height: 1.8;
+  font-size: 0.95rem;
+  white-space: pre-line;
 }
